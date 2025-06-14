@@ -1,7 +1,7 @@
 // src/components/RpmDashboard.tsx
 import React, { useEffect, useState } from 'react';
 import { View, StyleSheet, Text } from 'react-native';
-import Svg, { Circle, Line, Text as SvgText, Path, Defs, LinearGradient, Stop, RadialGradient, Ellipse } from 'react-native-svg';
+import Svg, { Circle, Line, Text as SvgText, Path, Defs, LinearGradient, Stop, RadialGradient, Ellipse, Mask, Rect } from 'react-native-svg';
 import Animated, {
   useSharedValue,
   useAnimatedProps,
@@ -22,8 +22,9 @@ function RpmGauge({ rpm, speed }: { rpm: number; speed: number }) {
 
   const animatedProps = useAnimatedProps(() => {
     const rad = (rotation.value * Math.PI) / 180;
-    const x = 140 + 100 * Math.cos(rad);
-    const y = 140 + 100 * Math.sin(rad);
+    const extendedLength = 125; // extend 20 beyond the radius
+    const x = 140 + extendedLength * Math.cos(rad);
+    const y = 140 + extendedLength * Math.sin(rad);
     return {
       x2: x,
       y2: y,
@@ -115,6 +116,10 @@ function RpmGauge({ rpm, speed }: { rpm: number; speed: number }) {
           <Stop offset="0%" stopColor="#FFFFFF" stopOpacity="0.9" />
           <Stop offset="100%" stopColor="#FFFFFF" stopOpacity="0" />
         </RadialGradient>
+        <Mask id="pointerMask">
+          <Rect x="0" y="0" width="280" height="280" fill="white" />
+          <Circle cx={140} cy={140} r={110} fill="black" />
+        </Mask>
       </Defs>
       <Circle cx={140} cy={140} r={120} stroke="#1E1E1E" strokeWidth={14} fill="#000" />
       {reflectionEffect}
@@ -128,6 +133,7 @@ function RpmGauge({ rpm, speed }: { rpm: number; speed: number }) {
         stroke="#FF3B30"
         strokeWidth={5}
         strokeLinecap="round"
+        mask="url(#pointerMask)"
       />
       <SvgText
         x={140}
