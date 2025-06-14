@@ -1,7 +1,7 @@
 // src/components/RpmDashboard.tsx
 import React, { useEffect, useState } from 'react';
 import { View, StyleSheet, Text } from 'react-native';
-import Svg, { Circle, Line, Text as SvgText, Path } from 'react-native-svg';
+import Svg, { Circle, Line, Text as SvgText, Path, Defs, LinearGradient, Stop, RadialGradient, Ellipse } from 'react-native-svg';
 import Animated, {
   useSharedValue,
   useAnimatedProps,
@@ -12,7 +12,7 @@ import Animated, {
 const AnimatedLine = Animated.createAnimatedComponent(Line);
 
 function RpmGauge({ rpm, speed }: { rpm: number; speed: number }) {
-  const rotation = useSharedValue(0);
+  const rotation = useSharedValue(-180);
 
   useEffect(() => {
     const clamped = Math.min(speed, 250);
@@ -30,7 +30,7 @@ function RpmGauge({ rpm, speed }: { rpm: number; speed: number }) {
     };
   });
 
-  const totalSegments = 10;
+  const totalSegments = 30;
   const activeSegments = Math.round((rpm / 8000) * totalSegments);
 
   const arcSegments = Array.from({ length: totalSegments }).map((_, i) => {
@@ -43,7 +43,8 @@ function RpmGauge({ rpm, speed }: { rpm: number; speed: number }) {
     const y1 = 140 + r * Math.sin((Math.PI * startAngle) / 180);
     const x2 = 140 + r * Math.cos((Math.PI * endAngle) / 180);
     const y2 = 140 + r * Math.sin((Math.PI * endAngle) / 180);
-    const color = i < activeSegments ? (i > 7 ? 'red' : 'lime') : '#333';
+
+    const color = i < activeSegments ? (i > totalSegments * 0.7 ? 'red' : 'lime') : '#333';
     return (
       <Path
         key={i}
@@ -55,18 +56,88 @@ function RpmGauge({ rpm, speed }: { rpm: number; speed: number }) {
     );
   });
 
+  const arcLabels = Array.from({ length: 9 }).map((_, i) => {
+    const rpmValue = i * 1000;
+    const angle = (-180 + (i * 180) / 8) * (Math.PI / 180);
+    const r = 100;
+    const x = 140 + r * Math.cos(angle);
+    const y = 140 + r * Math.sin(angle);
+    return (
+      <SvgText
+        key={`label-${i}`}
+        x={x}
+        y={y}
+        fill="white"
+        fontSize={12}
+        fontWeight="bold"
+        textAnchor="middle"
+        alignmentBaseline="middle"
+      >
+        {rpmValue / 1000}
+      </SvgText>
+    );
+  });
+
+  const arcBlueRing = (
+    <Path
+      d={`M${140 - 100},${140} A100,100 0 0 1 ${140 + 100},${140}`}
+      stroke="url(#blueRing)"
+      strokeWidth={18}
+      fill="none"
+      strokeLinecap="round"
+    />
+  );
+
+  const reflectionEffect = (
+    <Ellipse
+      cx={140}
+      cy={100}
+      rx={100}
+      ry={30}
+      fill="url(#reflectionGradient)"
+      opacity={0.3}
+    />
+  );
+
   return (
     <Svg width={280} height={280}>
-      <Circle cx={140} cy={140} r={120} stroke="gray" strokeWidth={14} fill="black" />
+      <Defs>
+        <LinearGradient id="rpmGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+          <Stop offset="0%" stopColor="#00FF00" />
+          <Stop offset="50%" stopColor="#FFA500" />
+          <Stop offset="100%" stopColor="#FF0000" />
+        </LinearGradient>
+        <LinearGradient id="blueRing" x1="0%" y1="0%" x2="100%" y2="0%">
+          <Stop offset="0%" stopColor="#00BFFF" stopOpacity="0.8" />
+          <Stop offset="100%" stopColor="#008CFF" stopOpacity="0.8" />
+        </LinearGradient>
+        <RadialGradient id="reflectionGradient" cx="50%" cy="50%" r="50%">
+          <Stop offset="0%" stopColor="#FFFFFF" stopOpacity="0.9" />
+          <Stop offset="100%" stopColor="#FFFFFF" stopOpacity="0" />
+        </RadialGradient>
+      </Defs>
+      <Circle cx={140} cy={140} r={120} stroke="#1E1E1E" strokeWidth={14} fill="#000" />
+      {reflectionEffect}
+      {arcBlueRing}
       {arcSegments}
+      {arcLabels}
       <AnimatedLine
         x1={140}
         y1={140}
         animatedProps={animatedProps}
-        stroke="red"
-        strokeWidth={4}
+        stroke="#FF3B30"
+        strokeWidth={5}
+        strokeLinecap="round"
       />
-      <SvgText x={140} y={150} fill="white" fontSize={28} textAnchor="middle">
+      <SvgText
+        x={140}
+        y={150}
+        fill="white"
+        fontSize={32}
+        fontWeight="600"
+        fontFamily="Helvetica Neue"
+        textAnchor="middle"
+      >
         {speed} km/h
       </SvgText>
     </Svg>
@@ -87,6 +158,11 @@ export default function RpmDashboard() {
   const [gear, setGear] = useState(1);
 
   const bgColor = useSharedValue('#111');
+  const opacity = useSharedValue(0);
+
+  useEffect(() => {
+    opacity.value = withTiming(1, { duration: 800 });
+  }, []);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -104,6 +180,7 @@ export default function RpmDashboard() {
   const animatedBg = useAnimatedStyle(() => {
     return {
       backgroundColor: bgColor.value,
+      opacity: opacity.value,
     };
   });
 
@@ -127,9 +204,15 @@ const styles = StyleSheet.create({
     padding: 10,
     backgroundColor: '#222',
     borderRadius: 10,
+    shadowColor: '#00BFFF',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.6,
+    shadowRadius: 4,
   },
   gearText: {
     color: 'white',
-    fontSize: 24,
+    fontSize: 26,
+    fontWeight: 'bold',
+    fontFamily: 'Helvetica Neue',
   },
 });
