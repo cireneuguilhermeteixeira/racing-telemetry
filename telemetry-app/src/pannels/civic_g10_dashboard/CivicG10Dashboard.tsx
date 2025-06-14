@@ -1,7 +1,7 @@
 // src/components/RpmDashboard.tsx
 import React, { useEffect, useState } from 'react';
 import { View, StyleSheet, Text } from 'react-native';
-import Svg, { Circle, Line, Rect, Text as SvgText } from 'react-native-svg';
+import Svg, { Circle, Line, Text as SvgText, Path } from 'react-native-svg';
 import Animated, {
   useSharedValue,
   useAnimatedProps,
@@ -10,39 +10,64 @@ import Animated, {
 } from 'react-native-reanimated';
 
 const AnimatedLine = Animated.createAnimatedComponent(Line);
-const AnimatedRect = Animated.createAnimatedComponent(Rect);
 
-function RpmGauge({ rpm }: { rpm: number }) {
+function RpmGauge({ rpm, speed }: { rpm: number; speed: number }) {
   const rotation = useSharedValue(0);
 
   useEffect(() => {
-    const clamped = Math.min(rpm, 8000);
-    const angle = (clamped / 8000) * 180 - 90;
+    const clamped = Math.min(speed, 250);
+    const angle = (clamped / 250) * 180 - 180;
     rotation.value = withTiming(angle, { duration: 300 });
-  }, [rpm]);
+  }, [speed]);
 
   const animatedProps = useAnimatedProps(() => {
     const rad = (rotation.value * Math.PI) / 180;
-    const x = 100 + 60 * Math.cos(rad);
-    const y = 100 + 60 * Math.sin(rad);
+    const x = 140 + 100 * Math.cos(rad);
+    const y = 140 + 100 * Math.sin(rad);
     return {
       x2: x,
       y2: y,
     };
   });
 
+  const totalSegments = 10;
+  const activeSegments = Math.round((rpm / 8000) * totalSegments);
+
+  const arcSegments = Array.from({ length: totalSegments }).map((_, i) => {
+    const angleStep = 180 / totalSegments;
+    const startAngle = -180 + i * angleStep;
+    const endAngle = startAngle + angleStep;
+    const largeArc = angleStep > 180 ? 1 : 0;
+    const r = 120;
+    const x1 = 140 + r * Math.cos((Math.PI * startAngle) / 180);
+    const y1 = 140 + r * Math.sin((Math.PI * startAngle) / 180);
+    const x2 = 140 + r * Math.cos((Math.PI * endAngle) / 180);
+    const y2 = 140 + r * Math.sin((Math.PI * endAngle) / 180);
+    const color = i < activeSegments ? (i > 7 ? 'red' : 'lime') : '#333';
+    return (
+      <Path
+        key={i}
+        d={`M${x1},${y1} A${r},${r} 0 ${largeArc} 1 ${x2},${y2}`}
+        stroke={color}
+        strokeWidth={6}
+        fill="none"
+      />
+    );
+  });
+
   return (
-    <Svg width={200} height={200}>
-      <Circle cx={100} cy={100} r={90} stroke="gray" strokeWidth={10} fill="black" />
+    <Svg width={280} height={280}>
+      <Circle cx={140} cy={140} r={120} stroke="gray" strokeWidth={14} fill="black" />
+      {arcSegments}
       <AnimatedLine
-        x1={100}
-        y1={100}
+        x1={140}
+        y1={140}
         animatedProps={animatedProps}
         stroke="red"
         strokeWidth={4}
       />
-      <SvgText x={100} y={190} fill="white" fontSize={16} textAnchor="middle">
-        {rpm} RPM
+      <SvgText x={140} y={150} fill="white" fontSize={28} textAnchor="middle">
+        {speed} km/h
       </SvgText>
     </Svg>
   );
@@ -56,35 +81,7 @@ function GearDisplay({ gear }: { gear: number }) {
   );
 }
 
-function SpeedDisplay({ speed }: { speed: number }) {
-  return (
-    <View style={styles.speedBox}>
-      <Text style={styles.speedText}>{speed} km/h</Text>
-    </View>
-  );
-}
-
-function RpmBar({ rpm }: { rpm: number }) {
-  const totalBlocks = 10;
-  const activeBlocks = Math.round((rpm / 8000) * totalBlocks);
-  return (
-    <View style={styles.rpmBar}>
-      {Array.from({ length: totalBlocks }).map((_, i) => (
-        <View
-          key={i}
-          style={[
-            styles.rpmBlock,
-            {
-              backgroundColor: i < activeBlocks ? (i > 7 ? 'red' : 'lime') : '#444',
-            },
-          ]}
-        />
-      ))}
-    </View>
-  );
-}
-
-export default function CivicG10Dashboard() {
+export default function RpmDashboard() {
   const [rpm, setRpm] = useState(0);
   const [speed, setSpeed] = useState(0);
   const [gear, setGear] = useState(1);
@@ -112,10 +109,8 @@ export default function CivicG10Dashboard() {
 
   return (
     <Animated.View style={[styles.container, animatedBg]}>
-      <RpmGauge rpm={rpm} />
-      <SpeedDisplay speed={speed} />
+      <RpmGauge rpm={rpm} speed={speed} />
       <GearDisplay gear={gear} />
-      <RpmBar rpm={rpm} />
     </Animated.View>
   );
 }
@@ -134,25 +129,7 @@ const styles = StyleSheet.create({
     borderRadius: 10,
   },
   gearText: {
-    color: 'blue',
-    fontSize: 24,
-  },
-  speedBox: {
-    marginTop: 20,
-  },
-  speedText: {
-    fontSize: 32,
     color: 'white',
-    fontWeight: 'bold',
-  },
-  rpmBar: {
-    flexDirection: 'row',
-    marginTop: 30,
-  },
-  rpmBlock: {
-    width: 20,
-    height: 20,
-    margin: 2,
-    borderRadius: 4,
+    fontSize: 24,
   },
 });
