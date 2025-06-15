@@ -1,7 +1,7 @@
 // src/components/RpmDashboard.tsx
 import React, { useEffect, useState } from 'react';
 import { View, StyleSheet, Text } from 'react-native';
-import Svg, { Circle, Line, Text as SvgText, Path, Defs, LinearGradient, Stop, RadialGradient, Ellipse, Mask, Rect } from 'react-native-svg';
+import Svg, { Circle, Line, Text as SvgText, Path, Defs, LinearGradient, Stop, RadialGradient, Ellipse, Mask, Rect, G, Filter } from 'react-native-svg';
 import Animated, {
   useSharedValue,
   useAnimatedProps,
@@ -19,7 +19,7 @@ const EXTENDED_LENGTH = 165;
 const BLUE_RING_RADIUS = 130;
 const LABEL_RADIUS = 130;
 const ARC_RADIUS = 160;
-const SPEED_TEXT_Y = 210;
+const SPEED_TEXT_Y = 190; // Moved reflection higher
 
 function RpmGauge({ rpm, speed }: { rpm: number; speed: number }) {
   const rotation = useSharedValue(-180);
@@ -57,10 +57,16 @@ function RpmGauge({ rpm, speed }: { rpm: number; speed: number }) {
     let color = '#222';
     if (i < activeSegments) {
       const ratio = i / totalSegments;
-      if (ratio > 0.8) {
+      if (ratio > 0.9) {
+        color = '#a30000';
+      } else if (ratio > 0.8) {
         color = '#8B0000';
+      } else if (ratio > 0.6) {
+        color = '#003E7E';
       } else if (ratio > 0.4) {
-        color = '#0050A0'; 
+        color = '#0050A0';
+      } else if (ratio > 0.2) {
+        color = '#0066CC';
       } else {
         color = '#003366';
       }
@@ -117,7 +123,19 @@ function RpmGauge({ rpm, speed }: { rpm: number; speed: number }) {
         const y1 = CENTER_Y + inner * Math.sin(angle);
         const x2 = CENTER_X + outer * Math.cos(angle);
         const y2 = CENTER_Y + outer * Math.sin(angle);
-        return <Line key={`tick-${i}`} x1={x1} y1={y1} x2={x2} y2={y2} stroke="white" strokeWidth={1} />;
+        const isRed = i >= 70;
+        return (
+          <Line
+            key={`tick-${i}`}
+            x1={x1}
+            y1={y1}
+            x2={x2}
+            y2={y2}
+            stroke={isRed ? '#8B0000' : 'white'}
+            strokeWidth={1}
+            strokeOpacity={0.9}
+          />
+        );
       })}
       {/* Major ticks at label positions */}
       {Array.from({ length: 9 }).map((_, i) => {
@@ -128,7 +146,19 @@ function RpmGauge({ rpm, speed }: { rpm: number; speed: number }) {
         const y1 = CENTER_Y + inner * Math.sin(angle);
         const x2 = CENTER_X + outer * Math.cos(angle);
         const y2 = CENTER_Y + outer * Math.sin(angle);
-        return <Line key={`major-tick-${i}`} x1={x1} y1={y1} x2={x2} y2={y2} stroke="white" strokeWidth={2} />;
+        const isRed = i >= 7;
+        return (
+          <Line
+            key={`major-tick-${i}`}
+            x1={x1}
+            y1={y1}
+            x2={x2}
+            y2={y2}
+            stroke={isRed ? '#8B0000' : 'white'}
+            strokeWidth={2}
+            strokeOpacity={0.95}
+          />
+        );
       })}
     </>
   );
@@ -136,7 +166,7 @@ function RpmGauge({ rpm, speed }: { rpm: number; speed: number }) {
   const reflectionEffect = (
     <Ellipse
       cx={CENTER_X}
-      cy={CENTER_Y}
+      cy={CENTER_Y - 80}
       rx={120}
       ry={40}
       fill="url(#reflectionGradient)"
@@ -162,7 +192,7 @@ function RpmGauge({ rpm, speed }: { rpm: number; speed: number }) {
         </RadialGradient>
         <Mask id="pointerMask">
           <Rect x="0" y="0" width={CENTER_X * 2} height={CENTER_Y * 1.2} fill="white" />
-          <Circle cx={CENTER_X} cy={CENTER_Y} r={RADIUS - 20} fill="black" />
+          <Circle cx={CENTER_X} cy={CENTER_Y} r={RADIUS - 40} fill="black" />
         </Mask>
       </Defs>
       <Circle cx={CENTER_X} cy={CENTER_Y} r={RADIUS} stroke="#1E1E1E" strokeWidth={14} fill="#000" />
