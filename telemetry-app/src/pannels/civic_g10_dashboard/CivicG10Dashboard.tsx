@@ -11,6 +11,16 @@ import Animated, {
 
 const AnimatedLine = Animated.createAnimatedComponent(Line);
 
+// Global configuration
+const CENTER_X = 200;
+const CENTER_Y = 200;
+const RADIUS = 160;
+const EXTENDED_LENGTH = 165;
+const BLUE_RING_RADIUS = 130;
+const LABEL_RADIUS = 130;
+const ARC_RADIUS = 160;
+const SPEED_TEXT_Y = 210;
+
 function RpmGauge({ rpm, speed }: { rpm: number; speed: number }) {
   const rotation = useSharedValue(-180);
 
@@ -22,9 +32,8 @@ function RpmGauge({ rpm, speed }: { rpm: number; speed: number }) {
 
   const animatedProps = useAnimatedProps(() => {
     const rad = (rotation.value * Math.PI) / 180;
-    const extendedLength = 125; // extend 20 beyond the radius
-    const x = 140 + extendedLength * Math.cos(rad);
-    const y = 140 + extendedLength * Math.sin(rad);
+    const x = CENTER_X + EXTENDED_LENGTH * Math.cos(rad);
+    const y = CENTER_Y + EXTENDED_LENGTH * Math.sin(rad);
     return {
       x2: x,
       y2: y,
@@ -39,13 +48,24 @@ function RpmGauge({ rpm, speed }: { rpm: number; speed: number }) {
     const startAngle = -180 + i * angleStep;
     const endAngle = startAngle + angleStep;
     const largeArc = angleStep > 180 ? 1 : 0;
-    const r = 120;
-    const x1 = 140 + r * Math.cos((Math.PI * startAngle) / 180);
-    const y1 = 140 + r * Math.sin((Math.PI * startAngle) / 180);
-    const x2 = 140 + r * Math.cos((Math.PI * endAngle) / 180);
-    const y2 = 140 + r * Math.sin((Math.PI * endAngle) / 180);
+    const r = ARC_RADIUS;
+    const x1 = CENTER_X + r * Math.cos((Math.PI * startAngle) / 180);
+    const y1 = CENTER_Y + r * Math.sin((Math.PI * startAngle) / 180);
+    const x2 = CENTER_X + r * Math.cos((Math.PI * endAngle) / 180);
+    const y2 = CENTER_Y + r * Math.sin((Math.PI * endAngle) / 180);
 
-    const color = i < activeSegments ? (i > totalSegments * 0.7 ? 'red' : 'lime') : '#333';
+    let color = '#222';
+    if (i < activeSegments) {
+      const ratio = i / totalSegments;
+      if (ratio > 0.8) {
+        color = '#8B0000';
+      } else if (ratio > 0.4) {
+        color = '#0050A0'; 
+      } else {
+        color = '#003366';
+      }
+    }
+
     return (
       <Path
         key={i}
@@ -60,9 +80,9 @@ function RpmGauge({ rpm, speed }: { rpm: number; speed: number }) {
   const arcLabels = Array.from({ length: 9 }).map((_, i) => {
     const rpmValue = i * 1000;
     const angle = (-180 + (i * 180) / 8) * (Math.PI / 180);
-    const r = 100;
-    const x = 140 + r * Math.cos(angle);
-    const y = 140 + r * Math.sin(angle);
+    const r = LABEL_RADIUS;
+    const x = CENTER_X + r * Math.cos(angle);
+    const y = CENTER_Y + r * Math.sin(angle);
     return (
       <SvgText
         key={`label-${i}`}
@@ -80,28 +100,52 @@ function RpmGauge({ rpm, speed }: { rpm: number; speed: number }) {
   });
 
   const arcBlueRing = (
-    <Path
-      d={`M${140 - 100},${140} A100,100 0 0 1 ${140 + 100},${140}`}
-      stroke="url(#blueRing)"
-      strokeWidth={18}
-      fill="none"
-      strokeLinecap="round"
-    />
+    <>
+      <Path
+        d={`M${CENTER_X - BLUE_RING_RADIUS},${CENTER_Y} A${BLUE_RING_RADIUS},${BLUE_RING_RADIUS} 0 0 1 ${CENTER_X + BLUE_RING_RADIUS},${CENTER_Y}`}
+        stroke="url(#blueRing)"
+        strokeWidth={20}
+        fill="none"
+        strokeLinecap="round"
+      />
+      {/* Small ticks */}
+      {Array.from({ length: 81 }).map((_, i) => {
+        const angle = (-180 + i * (180 / 80)) * (Math.PI / 180);
+        const inner = BLUE_RING_RADIUS + 10;
+        const outer = BLUE_RING_RADIUS + 14;
+        const x1 = CENTER_X + inner * Math.cos(angle);
+        const y1 = CENTER_Y + inner * Math.sin(angle);
+        const x2 = CENTER_X + outer * Math.cos(angle);
+        const y2 = CENTER_Y + outer * Math.sin(angle);
+        return <Line key={`tick-${i}`} x1={x1} y1={y1} x2={x2} y2={y2} stroke="white" strokeWidth={1} />;
+      })}
+      {/* Major ticks at label positions */}
+      {Array.from({ length: 9 }).map((_, i) => {
+        const angle = (-180 + (i * 180) / 8) * (Math.PI / 180);
+        const inner = BLUE_RING_RADIUS + 10;
+        const outer = BLUE_RING_RADIUS + 22;
+        const x1 = CENTER_X + inner * Math.cos(angle);
+        const y1 = CENTER_Y + inner * Math.sin(angle);
+        const x2 = CENTER_X + outer * Math.cos(angle);
+        const y2 = CENTER_Y + outer * Math.sin(angle);
+        return <Line key={`major-tick-${i}`} x1={x1} y1={y1} x2={x2} y2={y2} stroke="white" strokeWidth={2} />;
+      })}
+    </>
   );
 
   const reflectionEffect = (
     <Ellipse
-      cx={140}
-      cy={100}
-      rx={100}
-      ry={30}
+      cx={CENTER_X}
+      cy={CENTER_Y}
+      rx={120}
+      ry={40}
       fill="url(#reflectionGradient)"
       opacity={0.3}
     />
   );
 
   return (
-    <Svg width={280} height={280}>
+    <Svg width={CENTER_X * 2} height={CENTER_Y * 1.2}>
       <Defs>
         <LinearGradient id="rpmGradient" x1="0%" y1="0%" x2="100%" y2="0%">
           <Stop offset="0%" stopColor="#00FF00" />
@@ -117,18 +161,18 @@ function RpmGauge({ rpm, speed }: { rpm: number; speed: number }) {
           <Stop offset="100%" stopColor="#FFFFFF" stopOpacity="0" />
         </RadialGradient>
         <Mask id="pointerMask">
-          <Rect x="0" y="0" width="280" height="280" fill="white" />
-          <Circle cx={140} cy={140} r={110} fill="black" />
+          <Rect x="0" y="0" width={CENTER_X * 2} height={CENTER_Y * 1.2} fill="white" />
+          <Circle cx={CENTER_X} cy={CENTER_Y} r={RADIUS - 20} fill="black" />
         </Mask>
       </Defs>
-      <Circle cx={140} cy={140} r={120} stroke="#1E1E1E" strokeWidth={14} fill="#000" />
+      <Circle cx={CENTER_X} cy={CENTER_Y} r={RADIUS} stroke="#1E1E1E" strokeWidth={14} fill="#000" />
       {reflectionEffect}
       {arcBlueRing}
       {arcSegments}
       {arcLabels}
       <AnimatedLine
-        x1={140}
-        y1={140}
+        x1={CENTER_X}
+        y1={CENTER_Y}
         animatedProps={animatedProps}
         stroke="#FF3B30"
         strokeWidth={5}
@@ -136,8 +180,8 @@ function RpmGauge({ rpm, speed }: { rpm: number; speed: number }) {
         mask="url(#pointerMask)"
       />
       <SvgText
-        x={140}
-        y={150}
+        x={CENTER_X}
+        y={SPEED_TEXT_Y}
         fill="white"
         fontSize={32}
         fontWeight="600"
@@ -203,7 +247,7 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingTop: 80,
+    paddingTop: 20,
   },
   gearBox: {
     marginTop: 20,
