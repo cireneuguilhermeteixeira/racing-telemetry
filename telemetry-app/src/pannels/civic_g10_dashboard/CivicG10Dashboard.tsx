@@ -1,7 +1,7 @@
 // src/components/RpmDashboard.tsx
 import React, { useEffect, useState } from 'react';
 import { View, StyleSheet, Text } from 'react-native';
-import Svg, { Circle, Line, Text as SvgText, Path, Defs, LinearGradient, Stop, RadialGradient, Ellipse, Mask, Rect, G, Filter } from 'react-native-svg';
+import Svg, { Circle, Line, Text as SvgText, Path, Defs, LinearGradient, Stop, RadialGradient, Ellipse, Mask, Rect } from 'react-native-svg';
 import Animated, {
   useSharedValue,
   useAnimatedProps,
@@ -19,16 +19,17 @@ const EXTENDED_LENGTH = 165;
 const BLUE_RING_RADIUS = 130;
 const LABEL_RADIUS = 130;
 const ARC_RADIUS = 160;
-const SPEED_TEXT_Y = 190; // Moved reflection higher
+const SPEED_TEXT_Y = 190;
+const MAX_RPM_VALUE = 8000;
 
 function RpmGauge({ rpm, speed }: { rpm: number; speed: number }) {
   const rotation = useSharedValue(-180);
 
   useEffect(() => {
-    const clamped = Math.min(speed, 250);
-    const angle = (clamped / 250) * 180 - 180;
+    const clamped = Math.min(rpm, MAX_RPM_VALUE);
+    const angle = (clamped / MAX_RPM_VALUE) * 180 - 180;
     rotation.value = withTiming(angle, { duration: 300 });
-  }, [speed]);
+  }, [rpm]);
 
   const animatedProps = useAnimatedProps(() => {
     const rad = (rotation.value * Math.PI) / 180;
@@ -41,13 +42,12 @@ function RpmGauge({ rpm, speed }: { rpm: number; speed: number }) {
   });
 
   const totalSegments = 30;
-  const activeSegments = Math.round((rpm / 8000) * totalSegments);
+  const activeSegments = Math.round((rpm / MAX_RPM_VALUE) * totalSegments);
 
   const arcSegments = Array.from({ length: totalSegments }).map((_, i) => {
     const angleStep = 180 / totalSegments;
     const startAngle = -180 + i * angleStep;
     const endAngle = startAngle + angleStep;
-    const largeArc = angleStep > 180 ? 1 : 0;
     const r = ARC_RADIUS;
     const x1 = CENTER_X + r * Math.cos((Math.PI * startAngle) / 180);
     const y1 = CENTER_Y + r * Math.sin((Math.PI * startAngle) / 180);
@@ -75,7 +75,7 @@ function RpmGauge({ rpm, speed }: { rpm: number; speed: number }) {
     return (
       <Path
         key={i}
-        d={`M${x1},${y1} A${r},${r} 0 ${largeArc} 1 ${x2},${y2}`}
+        d={`M${x1},${y1} L${x2},${y2}`}
         stroke={color}
         strokeWidth={6}
         fill="none"
@@ -83,13 +83,14 @@ function RpmGauge({ rpm, speed }: { rpm: number; speed: number }) {
     );
   });
 
-  const arcLabels = Array.from({ length: 9 }).map((_, i) => {
+  const arcLabels = Array.from({ length: 9 }).flatMap((_, i) => {
     const rpmValue = i * 1000;
     const angle = (-180 + (i * 180) / 8) * (Math.PI / 180);
     const r = LABEL_RADIUS;
     const x = CENTER_X + r * Math.cos(angle);
     const y = CENTER_Y + r * Math.sin(angle);
-    return (
+
+    const elements = [
       <SvgText
         key={`label-${i}`}
         x={x}
@@ -102,11 +103,40 @@ function RpmGauge({ rpm, speed }: { rpm: number; speed: number }) {
       >
         {rpmValue / 1000}
       </SvgText>
-    );
+    ];
+
+    if (i === 4) {
+      elements.push(
+        <SvgText
+          key="label-unit"
+          x={x}
+          y={y + 20}
+          fill="white"
+          fontSize={10}
+          fontWeight="normal"
+          textAnchor="middle"
+          alignmentBaseline="hanging"
+        >
+          x1000r/min
+        </SvgText>
+      );
+    }
+
+    return elements;
   });
+
+  const arcBlueBackground = (
+    <Path
+      d={`M${CENTER_X - BLUE_RING_RADIUS - 10},${CENTER_Y} A${BLUE_RING_RADIUS + 10},${BLUE_RING_RADIUS + 10} 0 0 1 ${CENTER_X + BLUE_RING_RADIUS + 10},${CENTER_Y}`}
+      stroke="url(#ringBg)"
+      strokeWidth={40}
+      fill="none"
+    />
+  );
 
   const arcBlueRing = (
     <>
+      {arcBlueBackground}
       <Path
         d={`M${CENTER_X - BLUE_RING_RADIUS},${CENTER_Y} A${BLUE_RING_RADIUS},${BLUE_RING_RADIUS} 0 0 1 ${CENTER_X + BLUE_RING_RADIUS},${CENTER_Y}`}
         stroke="url(#blueRing)"
@@ -114,7 +144,6 @@ function RpmGauge({ rpm, speed }: { rpm: number; speed: number }) {
         fill="none"
         strokeLinecap="round"
       />
-      {/* Small ticks */}
       {Array.from({ length: 81 }).map((_, i) => {
         const angle = (-180 + i * (180 / 80)) * (Math.PI / 180);
         const inner = BLUE_RING_RADIUS + 10;
@@ -137,7 +166,6 @@ function RpmGauge({ rpm, speed }: { rpm: number; speed: number }) {
           />
         );
       })}
-      {/* Major ticks at label positions */}
       {Array.from({ length: 9 }).map((_, i) => {
         const angle = (-180 + (i * 180) / 8) * (Math.PI / 180);
         const inner = BLUE_RING_RADIUS + 10;
@@ -166,7 +194,7 @@ function RpmGauge({ rpm, speed }: { rpm: number; speed: number }) {
   const reflectionEffect = (
     <Ellipse
       cx={CENTER_X}
-      cy={CENTER_Y - 80}
+      cy={CENTER_Y - 70}
       rx={120}
       ry={40}
       fill="url(#reflectionGradient)"
@@ -177,14 +205,13 @@ function RpmGauge({ rpm, speed }: { rpm: number; speed: number }) {
   return (
     <Svg width={CENTER_X * 2} height={CENTER_Y * 1.2}>
       <Defs>
-        <LinearGradient id="rpmGradient" x1="0%" y1="0%" x2="100%" y2="0%">
-          <Stop offset="0%" stopColor="#00FF00" />
-          <Stop offset="50%" stopColor="#FFA500" />
-          <Stop offset="100%" stopColor="#FF0000" />
-        </LinearGradient>
         <LinearGradient id="blueRing" x1="0%" y1="0%" x2="100%" y2="0%">
           <Stop offset="0%" stopColor="#00BFFF" stopOpacity="0.8" />
           <Stop offset="100%" stopColor="#008CFF" stopOpacity="0.8" />
+        </LinearGradient>
+        <LinearGradient id="ringBg" x1="0%" y1="0%" x2="100%" y2="0%">
+          <Stop offset="40%" stopColor="#EEEEE" stopOpacity="0.25" />
+          <Stop offset="100%" stopColor="#FFFFFF" stopOpacity="0.5" />
         </LinearGradient>
         <RadialGradient id="reflectionGradient" cx="50%" cy="50%" r="50%">
           <Stop offset="0%" stopColor="#FFFFFF" stopOpacity="0.9" />
@@ -211,15 +238,29 @@ function RpmGauge({ rpm, speed }: { rpm: number; speed: number }) {
       />
       <SvgText
         x={CENTER_X}
-        y={SPEED_TEXT_Y}
+        y={SPEED_TEXT_Y - 50}
         fill="white"
         fontSize={32}
         fontWeight="600"
         fontFamily="Helvetica Neue"
         textAnchor="middle"
       >
-        {speed} km/h
+        {speed}
       </SvgText>
+      <SvgText
+        x={CENTER_X + 26}
+        y={SPEED_TEXT_Y - 56}
+        fill="white"
+        fontSize={10}
+        fontWeight="normal"
+        fontFamily="Helvetica Neue"
+        textAnchor="start"
+      >
+        km/h
+      </SvgText>
+      <SvgText x={CENTER_X - 100} y={CENTER_Y} fill="white" fontSize={12} fontFamily="Helvetica Neue"> 25.3 ºC</SvgText>
+      <SvgText x={CENTER_X} y={CENTER_Y} fill="white" fontSize={12} fontFamily="Helvetica Neue" textAnchor="middle">87.211 km</SvgText>
+      <SvgText x={CENTER_X + 100} y={CENTER_Y} fill="white" fontSize={12} fontFamily="Helvetica Neue" textAnchor="end">13:42</SvgText>
     </Svg>
   );
 }
@@ -246,7 +287,7 @@ export default function RpmDashboard() {
 
   useEffect(() => {
     const interval = setInterval(() => {
-      const simulatedRpm = Math.floor(Math.random() * 8000);
+      const simulatedRpm = Math.floor(Math.random() * MAX_RPM_VALUE);
       const simulatedSpeed = Math.floor(Math.random() * 250);
       const simulatedGear = Math.floor(Math.random() * 6);
       setRpm(simulatedRpm);
