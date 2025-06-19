@@ -1,30 +1,59 @@
 const dgram = require('dgram');
-const server = dgram.createSocket('udp4');
+const udpServer = dgram.createSocket('udp4');
+const WebSocket = require('ws');
+const http = require('http');
 
-const PORT = 3001;
+const PORT_UDP = 3001;
+const PORT_WS = 8080;
 
-server.on('listening', () => {
-  const address = server.address();
+const server = http.createServer();
+
+const wss = new WebSocket.Server({ server });
+const clients = new Set();
+
+
+
+// Initializing UDP server
+udpServer.on('listening', () => {
+  const address = udpServer.address();
   console.log(`🚀 UDP Server listening on ${address.address}:${address.port}`);
 });
 
-server.on('message', (msg, rinfo) => {
-  console.log(`📦 Message from ${rinfo.address}:${rinfo.port}`);
-  console.log(msg); // Raw buffer
-  console.log(parseTelemetry(msg)); // Decoded data
+udpServer.on('message', (msg, rinfo) => {
+  console.log(` Message from ${rinfo.address}:${rinfo.port}`);
+
+  const data = parseTelemetry(msg);
+  console.log(data);
+
+  const json = JSON.stringify(data);
+  for (const client of clients) {
+    if (client.readyState === WebSocket.OPEN) {
+      client.send(json);
+    }
+  }
 });
 
-/**
- * Exemplo básico para interpretar os primeiros bytes.
- * A estrutura completa do protocolo precisa ser conhecida para parse completo.
- */
 function parseTelemetry(buffer) {
-  // Exemplo: pegar apenas os primeiros campos como RPM, velocidade etc.
-  const rpm = buffer.readFloatLE(16);       // offset 16
-  const speed = buffer.readFloatLE(20);     // offset 20
-  const gear = buffer.readInt8(24);         // offset 24
+  const rpm = buffer.readFloatLE(16);
+  const speed = buffer.readFloatLE(20);
+  const gear = buffer.readInt8(24);
 
   return { rpm, speed, gear };
 }
 
-server.bind(PORT);
+udpServer.bind(PORT_UDP);
+
+wss.on('connection', (ws) => {
+  console.log('New  WebSocket client connected');
+  clients.add(ws);
+
+  ws.on('close', () => {
+    clients.delete(ws);
+    console.log('Client disconected');
+  });
+});
+
+// Initializing WebSocket server
+server.listen(PORT_WS, () => {
+  console.log(`WebSocket Server listening on ws://localhost:${PORT_WS}`);
+});
