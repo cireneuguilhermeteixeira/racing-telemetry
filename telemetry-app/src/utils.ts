@@ -1,0 +1,9 @@
+export const CENTER_X = 200;
+export const CENTER_Y = 200;
+export const RADIUS = 160;
+export const EXTENDED_LENGTH = 165;
+export const BLUE_RING_RADIUS = 130;
+export const LABEL_RADIUS = 130;
+export const ARC_RADIUS = 160;
+export const SPEED_TEXT_Y = 190;
+export const MAX_RPM_VALUE = 8000;

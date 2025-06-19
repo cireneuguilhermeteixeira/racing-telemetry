@@ -1,4 +1,3 @@
-// src/components/RpmDashboard.tsx
 import React, { useEffect, useState } from 'react';
 import { View, StyleSheet, Text } from 'react-native';
 import Svg, { Circle, Line, Text as SvgText, Path, Defs, LinearGradient, Stop, RadialGradient, Ellipse, Mask, Rect } from 'react-native-svg';
@@ -8,19 +7,22 @@ import Animated, {
   useAnimatedStyle,
   withTiming,
 } from 'react-native-reanimated';
+import { 
+  CENTER_X,
+  CENTER_Y,
+  EXTENDED_LENGTH,
+  MAX_RPM_VALUE,
+  RADIUS,
+  SPEED_TEXT_Y
+} from '../../utils';
+
+import ArcBlueRing from './components/ArcBlueRing';
+import ReflectionEffect from './components/ReflectionEffects';
+import ArcSegmentsAndLabels from './components/ArcSegmentsAndLabels';
 
 const AnimatedLine = Animated.createAnimatedComponent(Line);
 
-// Global configuration
-const CENTER_X = 200;
-const CENTER_Y = 200;
-const RADIUS = 160;
-const EXTENDED_LENGTH = 165;
-const BLUE_RING_RADIUS = 130;
-const LABEL_RADIUS = 130;
-const ARC_RADIUS = 160;
-const SPEED_TEXT_Y = 190;
-const MAX_RPM_VALUE = 8000;
+
 
 function RpmGauge({ rpm, speed }: { rpm: number; speed: number }) {
   const rotation = useSharedValue(-180);
@@ -40,167 +42,6 @@ function RpmGauge({ rpm, speed }: { rpm: number; speed: number }) {
       y2: y,
     };
   });
-
-  const totalSegments = 30;
-  const activeSegments = Math.round((rpm / MAX_RPM_VALUE) * totalSegments);
-
-  const arcSegments = Array.from({ length: totalSegments }).map((_, i) => {
-    const angleStep = 180 / totalSegments;
-    const startAngle = -180 + i * angleStep;
-    const endAngle = startAngle + angleStep;
-    const r = ARC_RADIUS;
-    const x1 = CENTER_X + r * Math.cos((Math.PI * startAngle) / 180);
-    const y1 = CENTER_Y + r * Math.sin((Math.PI * startAngle) / 180);
-    const x2 = CENTER_X + r * Math.cos((Math.PI * endAngle) / 180);
-    const y2 = CENTER_Y + r * Math.sin((Math.PI * endAngle) / 180);
-
-    let color = '#222';
-    if (i < activeSegments) {
-      const ratio = i / totalSegments;
-      if (ratio > 0.9) {
-        color = '#a30000';
-      } else if (ratio > 0.8) {
-        color = '#8B0000';
-      } else if (ratio > 0.6) {
-        color = '#003E7E';
-      } else if (ratio > 0.4) {
-        color = '#0050A0';
-      } else if (ratio > 0.2) {
-        color = '#0066CC';
-      } else {
-        color = '#003366';
-      }
-    }
-
-    return (
-      <Path
-        key={i}
-        d={`M${x1},${y1} L${x2},${y2}`}
-        stroke={color}
-        strokeWidth={6}
-        fill="none"
-      />
-    );
-  });
-
-  const arcLabels = Array.from({ length: 9 }).flatMap((_, i) => {
-    const rpmValue = i * 1000;
-    const angle = (-180 + (i * 180) / 8) * (Math.PI / 180);
-    const r = LABEL_RADIUS;
-    const x = CENTER_X + r * Math.cos(angle);
-    const y = CENTER_Y + r * Math.sin(angle);
-
-    const elements = [
-      <SvgText
-        key={`label-${i}`}
-        x={x}
-        y={y}
-        fill="white"
-        fontSize={12}
-        fontWeight="bold"
-        textAnchor="middle"
-        alignmentBaseline="middle"
-      >
-        {rpmValue / 1000}
-      </SvgText>
-    ];
-
-    if (i === 4) {
-      elements.push(
-        <SvgText
-          key="label-unit"
-          x={x}
-          y={y + 20}
-          fill="white"
-          fontSize={10}
-          fontWeight="normal"
-          textAnchor="middle"
-          alignmentBaseline="hanging"
-        >
-          x1000r/min
-        </SvgText>
-      );
-    }
-
-    return elements;
-  });
-
-  const arcBlueBackground = (
-    <Path
-      d={`M${CENTER_X - BLUE_RING_RADIUS - 10},${CENTER_Y} A${BLUE_RING_RADIUS + 10},${BLUE_RING_RADIUS + 10} 0 0 1 ${CENTER_X + BLUE_RING_RADIUS + 10},${CENTER_Y}`}
-      stroke="url(#ringBg)"
-      strokeWidth={40}
-      fill="none"
-    />
-  );
-
-  const arcBlueRing = (
-    <>
-      {arcBlueBackground}
-      <Path
-        d={`M${CENTER_X - BLUE_RING_RADIUS},${CENTER_Y} A${BLUE_RING_RADIUS},${BLUE_RING_RADIUS} 0 0 1 ${CENTER_X + BLUE_RING_RADIUS},${CENTER_Y}`}
-        stroke="url(#blueRing)"
-        strokeWidth={20}
-        fill="none"
-        strokeLinecap="round"
-      />
-      {Array.from({ length: 81 }).map((_, i) => {
-        const angle = (-180 + i * (180 / 80)) * (Math.PI / 180);
-        const inner = BLUE_RING_RADIUS + 10;
-        const outer = BLUE_RING_RADIUS + 14;
-        const x1 = CENTER_X + inner * Math.cos(angle);
-        const y1 = CENTER_Y + inner * Math.sin(angle);
-        const x2 = CENTER_X + outer * Math.cos(angle);
-        const y2 = CENTER_Y + outer * Math.sin(angle);
-        const isRed = i >= 70;
-        return (
-          <Line
-            key={`tick-${i}`}
-            x1={x1}
-            y1={y1}
-            x2={x2}
-            y2={y2}
-            stroke={isRed ? '#8B0000' : 'white'}
-            strokeWidth={1}
-            strokeOpacity={0.9}
-          />
-        );
-      })}
-      {Array.from({ length: 9 }).map((_, i) => {
-        const angle = (-180 + (i * 180) / 8) * (Math.PI / 180);
-        const inner = BLUE_RING_RADIUS + 10;
-        const outer = BLUE_RING_RADIUS + 22;
-        const x1 = CENTER_X + inner * Math.cos(angle);
-        const y1 = CENTER_Y + inner * Math.sin(angle);
-        const x2 = CENTER_X + outer * Math.cos(angle);
-        const y2 = CENTER_Y + outer * Math.sin(angle);
-        const isRed = i >= 7;
-        return (
-          <Line
-            key={`major-tick-${i}`}
-            x1={x1}
-            y1={y1}
-            x2={x2}
-            y2={y2}
-            stroke={isRed ? '#8B0000' : 'white'}
-            strokeWidth={2}
-            strokeOpacity={0.95}
-          />
-        );
-      })}
-    </>
-  );
-
-  const reflectionEffect = (
-    <Ellipse
-      cx={CENTER_X}
-      cy={CENTER_Y - 70}
-      rx={120}
-      ry={40}
-      fill="url(#reflectionGradient)"
-      opacity={0.3}
-    />
-  );
 
   return (
     <Svg width={CENTER_X * 2} height={CENTER_Y * 1.2}>
@@ -223,10 +64,9 @@ function RpmGauge({ rpm, speed }: { rpm: number; speed: number }) {
         </Mask>
       </Defs>
       <Circle cx={CENTER_X} cy={CENTER_Y} r={RADIUS} stroke="#1E1E1E" strokeWidth={14} fill="#000" />
-      {reflectionEffect}
-      {arcBlueRing}
-      {arcSegments}
-      {arcLabels}
+      <ReflectionEffect/>
+      <ArcBlueRing/>
+      <ArcSegmentsAndLabels rpm={rpm}/>
       <AnimatedLine
         x1={CENTER_X}
         y1={CENTER_Y}
