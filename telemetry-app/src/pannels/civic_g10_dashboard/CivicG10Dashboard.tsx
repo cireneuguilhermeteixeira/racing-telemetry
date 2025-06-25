@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import { StyleSheet } from 'react-native';
 import Animated, {
   useSharedValue,
@@ -10,13 +10,12 @@ import {
 } from '../../utils';
 import RpmGauge from './components/RPMGauce';
 import GearDisplay from './components/GearDisplay';
+import { useWebsocket } from '../../contexts/WebsocketContext';
 
 
 
 export default function RpmDashboard() {
-  const [rpm, setRpm] = useState(0);
-  const [speed, setSpeed] = useState(0);
-  const [gear, setGear] = useState(1);
+  const { rpm, speed, gear } = useWebsocket();
 
   const bgColor = useSharedValue('#111');
   const opacity = useSharedValue(0);
@@ -26,17 +25,8 @@ export default function RpmDashboard() {
   }, []);
 
   useEffect(() => {
-    const interval = setInterval(() => {
-      const simulatedRpm = Math.floor(Math.random() * MAX_RPM_VALUE);
-      const simulatedSpeed = Math.floor(Math.random() * 250);
-      const simulatedGear = Math.floor(Math.random() * 6);
-      setRpm(simulatedRpm);
-      setSpeed(simulatedSpeed);
-      setGear(simulatedGear);
-      bgColor.value = withTiming(simulatedRpm > 7000 ? '#330000' : '#111', { duration: 300 });
-    }, 800);
-    return () => clearInterval(interval);
-  }, []);
+    bgColor.value = withTiming(rpm > 7000 ? '#330000' : '#111', { duration: 300 });
+  }, [rpm]);
 
   const animatedBg = useAnimatedStyle(() => {
     return {
