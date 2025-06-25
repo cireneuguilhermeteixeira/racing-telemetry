@@ -54,6 +54,6 @@ wss.on('connection', (ws) => {
 });
 
 // Initializing WebSocket server
-server.listen(PORT_WS, () => {
-  console.log(`WebSocket Server listening on ws://localhost:${PORT_WS}`);
+server.listen(PORT_WS, '0.0.0.0', () => {
+  console.log(`WebSocket Server listening on ws://0.0.0.0:${PORT_WS}`);
 });
