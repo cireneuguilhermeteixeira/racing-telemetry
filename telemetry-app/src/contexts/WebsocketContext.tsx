@@ -25,7 +25,7 @@ export const WebsocketProvider = ({ children }: { children: ReactNode }) => {
     client.connect((data: TelemetryData) => {
       setTelemetry({
         rpm: data.rpm,
-        speed: data.speed,
+        speed: Math.round(data.speed), // format speed as integer
         gear: data.gear,
       });
     });
