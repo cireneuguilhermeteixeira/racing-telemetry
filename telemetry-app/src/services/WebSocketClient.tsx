@@ -1,7 +1,7 @@
-// WebSocketClient.tsx
-// Utility to connect to a WebSocket server and receive telemetry data
+import Constants from 'expo-constants';
 
-const WS_URL = process.env.REACT_APP_WS_URL || 'ws://192.168.0.13:8080'; // Change to your server's IP
+const WS_URL = Constants.expoConfig?.extra?.WS_URL ?? 'ws://192.168.0.13:8080';
+
 
 export type TelemetryData = {
   rpm: number;
