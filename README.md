@@ -40,6 +40,7 @@ The client is a React Native application that visualizes the telemetry data in r
 This project enables real-time visualization of Dirt Rally 2.0 telemetry data on any device in your network. The server efficiently parses and broadcasts telemetry, while the client delivers a visually rich, animated dashboard experience using modern React Native technologies.
 
 ---
+![image](https://github.com/user-attachments/assets/021a9a49-1c77-4970-b0d8-85a680c880db)
 
 ## Demo
 
