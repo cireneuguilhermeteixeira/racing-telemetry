@@ -34,11 +34,20 @@ udpServer.on('message', (msg, rinfo) => {
 });
 
 function parseTelemetry(buffer) {
-  const rpm = buffer.readFloatLE(16);
-  const speed = buffer.readFloatLE(20);
-  const gear = buffer.readInt8(24);
 
-  return { rpm, speed, gear };
+  const floats = [];
+  const count = Math.min(Math.floor(buffer.length / 4), 100); // pega até f99
+
+  for (let i = 0; i < count; i++) {
+    floats.push(buffer.readFloatLE(i * 4));
+  }
+
+  const rpm = floats[37] * 10;
+  const speed = floats[25] * 3.6;
+  const gear = floats[33];
+  const maxGear = floats[65]
+
+  return { rpm, speed, gear, maxGear };
 }
 
 udpServer.bind(PORT_UDP);
