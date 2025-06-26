@@ -36,11 +36,15 @@ The client is a React Native application that visualizes the telemetry data in r
 
 ---
 
-## Summary
-This project enables real-time visualization of Dirt Rally 2.0 telemetry data on any device in your network. The server efficiently parses and broadcasts telemetry, while the client delivers a visually rich, animated dashboard experience using modern React Native technologies.
+## Screenshots
 
----
-![image](https://github.com/user-attachments/assets/021a9a49-1c77-4970-b0d8-85a680c880db)
+Below are screenshots of the Racing Telemetry app interface, showcasing the real-time dashboard panels:
+
+| Civic G10 Dashboard | Basic RPM Dashboard |
+|:-------------------:|:------------------:|
+| ![Civic G10 Dashboard](https://github.com/user-attachments/assets/021a9a49-1c77-4970-b0d8-85a680c880db) | ![Basic RPM Dashboard](https://github.com/user-attachments/assets/021a9a49-1c77-4970-b0d8-85a680c880db) |
+
+The app features animated gauges, gear indicators, and speed displays, providing a visually rich and interactive experience similar to real car dashboards. The interface is designed for clarity and responsiveness, making it easy to monitor telemetry data during gameplay.
 
 ## Demo
 
