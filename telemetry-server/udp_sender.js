@@ -5,6 +5,7 @@ const GEAR_VALUES = [-1, 0, 1, 2, 3, 4, 5, 6];
 let rpm = 1000;
 let speed = 90;
 let gearIndex = 2; // Start at gear 1 (index 2)
+let maxGear = 6;
 
 function clamp(val, min, max) {
   return Math.max(min, Math.min(max, val));
@@ -24,16 +25,25 @@ function getNextGear(currentIndex) {
 }
 
 function sendTelemetry() {
-  const buffer = Buffer.alloc(25);
-  buffer.writeFloatLE(rpm, 16);
-  buffer.writeFloatLE(speed, 20);
-  buffer.writeInt8(GEAR_VALUES[gearIndex], 24);
+  // Create a buffer for 100 floats (400 bytes)
+  const buffer = Buffer.alloc(400);
+
+  // Fill with random floats
+  for (let i = 0; i < 100; i++) {
+    buffer.writeFloatLE(Math.random() * 100, i * 4);
+  }
+
+  // Set specific indices to meaningful values
+  buffer.writeFloatLE(rpm / 10, 37 * 4);      // index 37: rpm (scaled down)
+  buffer.writeFloatLE(speed / 3.6, 25 * 4);   // index 25: speed (scaled down)
+  buffer.writeFloatLE(GEAR_VALUES[gearIndex], 33 * 4); // index 33: gear
+  buffer.writeFloatLE(maxGear, 65 * 4);       // index 65: maxGear
 
   client.send(buffer, 3001, '127.0.0.1', (err) => {
     if (err) {
       console.error('Error when try to sent:', err);
     } else {
-      console.log(`Sent: rpm=${rpm}, speed=${speed}, gear=${GEAR_VALUES[gearIndex]}`);
+      console.log(`Sent: rpm=${rpm}, speed=${speed}, gear=${GEAR_VALUES[gearIndex]}, maxGear=${maxGear}`);
     }
   });
 }
