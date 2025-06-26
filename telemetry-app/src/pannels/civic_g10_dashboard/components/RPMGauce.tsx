@@ -30,7 +30,7 @@ const RpmGauge = ({ rpm, speed }: { rpm: number; speed: number }) => {
   useEffect(() => {
     const clamped = Math.min(rpm, MAX_RPM_VALUE);
     const angle = (clamped / MAX_RPM_VALUE) * 180 - 180;
-    rotation.value = withTiming(angle, { duration: 300 });
+    rotation.value = withTiming(angle, { duration: 50 });
   }, [rpm]);
 
   const animatedProps = useAnimatedProps(() => {

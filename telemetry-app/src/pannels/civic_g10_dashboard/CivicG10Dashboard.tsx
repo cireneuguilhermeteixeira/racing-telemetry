@@ -5,9 +5,6 @@ import Animated, {
   useAnimatedStyle,
   withTiming,
 } from 'react-native-reanimated';
-import { 
-  MAX_RPM_VALUE,
-} from '../../utils';
 import RpmGauge from './components/RPMGauce';
 import GearDisplay from './components/GearDisplay';
 import { useWebsocket } from '../../contexts/WebsocketContext';
@@ -25,7 +22,7 @@ export default function RpmDashboard() {
   }, []);
 
   useEffect(() => {
-    bgColor.value = withTiming(rpm > 7000 ? '#330000' : '#111', { duration: 300 });
+    bgColor.value = withTiming(rpm > 6000 ? '#330000' : '#111', { duration: 300 });
   }, [rpm]);
 
   const animatedBg = useAnimatedStyle(() => {

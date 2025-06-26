@@ -23,11 +23,11 @@ export const WebsocketProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     const client = new WebSocketClient();
     client.connect((data: TelemetryData) => {
-      setTelemetry({
-        rpm: data.rpm,
-        speed: Math.round(data.speed), // format speed as integer
-        gear: data.gear,
-      });
+    setTelemetry({
+      rpm: data.rpm,
+      speed: Math.round(Math.abs(data.speed)), // ensure speed is positive integer
+      gear: data.gear,
+    });
     });
     return () => {
       client.disconnect();
