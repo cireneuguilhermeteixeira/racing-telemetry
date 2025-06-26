@@ -42,7 +42,9 @@ Below are screenshots of the Racing Telemetry app interface, showcasing the real
 
 | Civic G10 Dashboard | Basic RPM Dashboard |
 |:-------------------:|:------------------:|
-| ![Civic G10 Dashboard](https://github.com/user-attachments/assets/021a9a49-1c77-4970-b0d8-85a680c880db) | ![Basic RPM Dashboard](https://github.com/user-attachments/assets/021a9a49-1c77-4970-b0d8-85a680c880db) |
+| ![Civic G10 Dashboard](https://github.com/user-attachments/assets/021a9a49-1c77-4970-b0d8-85a680c880db) | ![Basic RPM Dashboard](https://github.com/user-attachments/assets/94e05130-bdf7-45fc-90f8-1fd9578eff8e) |
+
+
 
 The app features animated gauges, gear indicators, and speed displays, providing a visually rich and interactive experience similar to real car dashboards. The interface is designed for clarity and responsiveness, making it easy to monitor telemetry data during gameplay.
 
